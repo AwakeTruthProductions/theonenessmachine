@@ -67,6 +67,10 @@ db.sqlite3-journal
 instance/
 .webassets-cache
 
+# General assets
+/assets/
+!/assets/images/theonenessmachine.png
+
 # Scrapy stuff:
 .scrapy
 

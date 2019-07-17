@@ -1,4 +1,5 @@
 import logging
+import random
 import requests
 import uuid
 from utils.aws import ssm
@@ -27,26 +28,31 @@ def get_image_details(category='nature'):
             quote_id, quote, author = get_unused_quote()
             get_picture = requests.get(image_url)
             if get_picture.status_code == 200:
-                image_path = f'assets/images/{source_id}{uuid.uuid4().hex}.jpg'
+                image_path = f'assets/images/{source_id}{uuid.uuid4().hex}.png'
                 with open(image_path, 'wb') as f:
                     f.write(get_picture.content)
 
                 return {
                     'image_path': image_path, 'quote': quote,
-                    'author': author, 'quote_id': quote_id
+                    'author': author, 'quote_id': quote_id,
+                    'source_id': source_id
                 }
         else:
             return {}
 
 
-def get_unused_image_url(imageHits, source):
+def get_unused_image_url(image_hits, source):
     conn = db.create_connection()
-    oldImages = []
+    old_images = []
     with conn:
-        oldImages = get_used_image_list(conn)
-        for hit in imageHits:
+        old_images = get_used_image_list(conn)
+        old_image_list = [item for sublist in old_images for item in sublist]
+        print(old_image_list)
+        for hit in image_hits:
             source_id = f'{source}_{str(hit["id"])}'
-            if source_id not in oldImages and hit['largeImageURL']:
+            print(source_id)
+            if source_id not in old_image_list and hit['largeImageURL']:
+                print(source_id)
                 return (hit['largeImageURL'], source_id)
 
     return ()
@@ -56,12 +62,12 @@ def get_unused_quote():
     conn = db.create_connection()
     sql = open(GET_QUOTE_SQL_PATH).read()
     with conn:
-        new_quote = db.execute_sql(conn, sql, {}, True)[0]
+        new_quote = random.choice(db.execute_sql(conn, sql, {}, True))
         if new_quote:
             return (
-                new_quote['quote_id'],
-                new_quote['quote'],
-                new_quote['author']
+                new_quote[0],
+                new_quote[1],
+                new_quote[2]
             )
     return None
 
@@ -73,15 +79,3 @@ def get_used_image_list(conn):
         return used_images
 
     return []
-
-
-def insert_quoted_image(source_id, disk_path, quote_id):
-    params = {
-        'source_id': source_id,
-        'disk_path': disk_path,
-        'quote_id': quote_id
-    }
-    conn = db.create_connection()
-    sql = open('utils/db/sql/dml/get_used_images.sql').read()
-    with conn:
-        db.execute_sql(conn, sql, params)
