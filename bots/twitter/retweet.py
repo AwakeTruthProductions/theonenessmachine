@@ -25,14 +25,15 @@ STREAM_FILTER = [
 ]
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 
 class RetweetListener(tweepy.StreamListener):
-    def __init__(self, api):
+    def __init__(self, api, scheduler=None):
         self.tweet_count = 0
         self.me = api.me()
         self.api = api
+        self.scheduler = scheduler
 
     def on_status(self, tweet):
         logger.info(f'Processing tweet id {tweet.id}')
@@ -44,6 +45,10 @@ class RetweetListener(tweepy.StreamListener):
             tweet.retweet()
             self.tweet_count += 1
             if self.tweet_count >= PER_SESSION_MAX_TWEET_COUNT:
+                logger.info('max tweet per session count reached')
+                if self.scheduler:
+                    self.scheduler.remove_job('twitter_retweet_bot')
+                    logger.info('shutting down twitter_retweet_bot scheduler')
                 return False
             else:
                 return True
@@ -56,6 +61,7 @@ class RetweetListener(tweepy.StreamListener):
 
 def start_stream(stream, **kwargs):
     try:
+        logger.info('starting retweet stream')
         stream.filter(**kwargs)
     except ReadTimeoutError:
         stream.disconnect()
@@ -67,18 +73,16 @@ def start_stream(stream, **kwargs):
         start_stream(stream, **kwargs)
 
 
-def start(filter_data=STREAM_FILTER):
+def start(filter_data=STREAM_FILTER, scheduler=None):
     api = initalize_auth()
-    while True:
-        streamListener = RetweetListener(api)
-        stream = tweepy.Stream(auth=api.auth, listener=streamListener)
-        followIds = filter_data[1]
-        keywords = filter_data[0]
-        # stream.filter(follow=followIds, languages=['en'])  # track=keywords
-        start_stream(
-            stream, follow=followIds, languages=['en']
-        )
-        time.sleep(20)
+    logger.info('setting up retweet stream')
+    streamListener = RetweetListener(api, scheduler)
+    stream = tweepy.Stream(auth=api.auth, listener=streamListener)
+    followIds = filter_data[1]
+    keywords = filter_data[0]
+    start_stream(
+        stream, follow=followIds, languages=['en']
+    )
 
 if __name__ == '__main__':
-    start(STREAM_FILTER)
+    start(filter_data=STREAM_FILTER)

@@ -20,10 +20,7 @@ def follow_back(api):
 
 def start():
     api = initalize_auth()
-    while True:
-        follow_back(api)
-        logger.info("Waiting...")
-        time.sleep(60)
+    follow_back(api)
 
 if __name__ == "__main__":
     start()
