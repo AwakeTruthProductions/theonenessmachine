@@ -47,12 +47,9 @@ def get_unused_image_url(image_hits, source):
     with conn:
         old_images = get_used_image_list(conn)
         old_image_list = [item for sublist in old_images for item in sublist]
-        print(old_image_list)
         for hit in image_hits:
             source_id = f'{source}_{str(hit["id"])}'
-            print(source_id)
             if source_id not in old_image_list and hit['largeImageURL']:
-                print(source_id)
                 return (hit['largeImageURL'], source_id)
 
     return ()

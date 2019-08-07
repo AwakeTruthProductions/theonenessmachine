@@ -3,12 +3,14 @@ import logging
 from datetime import datetime
 from apscheduler.schedulers.background import BlockingScheduler
 from bots import twitter, facebook, instagram, image_generator
+from utils.banner import banner
 
 logging.basicConfig()
 logger = logging.getLogger(__name__).setLevel(logging.DEBUG)
 
 
 def engage():
+    banner.print_banner()
     oneness_scheduler = BlockingScheduler({
         'apscheduler.executors.processpool': {
             'class': 'apscheduler.executors.pool:ProcessPoolExecutor',

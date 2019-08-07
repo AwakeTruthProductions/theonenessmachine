@@ -48,7 +48,6 @@ def post_image_quote_overlay(image_details):
 
     # get a font
     rando_font = random.choice(FONTS)
-    print(rando_font)
     fnt = ImageFont.truetype(
         FONT_PATH + rando_font, 36
     )
