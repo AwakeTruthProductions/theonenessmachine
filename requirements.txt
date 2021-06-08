@@ -1,7 +1,7 @@
 botocore==1.12.188
 boto3==1.9.188
 requests==2.20.0
-Pillow==6.2.0
+Pillow==8.2.0
 apscheduler==3.6.1
 beautifulsoup4==4.8.0
 tweepy==3.8.0
